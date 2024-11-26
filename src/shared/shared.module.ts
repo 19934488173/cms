@@ -18,6 +18,7 @@ import { UserService } from './services/user.service';
         logging: false,
       }),
     }),
+    //注册特定实体（如 User）的 Repository，用于操作对应的数据库表
     TypeOrmModule.forFeature([User]),
   ],
   providers: [ConfigurationService, UserService],

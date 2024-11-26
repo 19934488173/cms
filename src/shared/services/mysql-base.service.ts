@@ -4,14 +4,14 @@ import { DeepPartial } from 'typeorm/common/DeepPartial';
 export abstract class MySQLBaseService<T> {
   constructor(protected repository: Repository<T>) {}
   async findAll(): Promise<T[]> {
-    return this.repository.find();
+    return await this.repository.find();
   }
   async findOne(options: FindOneOptions<T>): Promise<T> {
-    return this.repository.findOne(options);
+    return await this.repository.findOne(options);
   }
   async create(createDto: DeepPartial<T>): Promise<T | T[]> {
-    const entity = this.repository.create(createDto);
-    return this.repository.save(entity);
+    const entity = await this.repository.create(createDto);
+    return await this.repository.save(entity);
   }
   async update(id: number, updateDto: QueryDeepPartialEntity<T>) {
     return await this.repository.update(id, updateDto);
