@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigurationService } from './services/configuration.service';
 import { User } from './entities/user.entity';
 import { UserService } from './services/user.service';
+import { UtilityService } from './services/utility.service';
+import { IsUsernameUniqueConstraint } from './validators/user-validators';
 @Global()
 @Module({
   imports: [
@@ -21,7 +23,17 @@ import { UserService } from './services/user.service';
     //注册特定实体（如 User）的 Repository，用于操作对应的数据库表
     TypeOrmModule.forFeature([User]),
   ],
-  providers: [ConfigurationService, UserService],
-  exports: [ConfigurationService, UserService],
+  providers: [
+    ConfigurationService,
+    UserService,
+    UtilityService,
+    IsUsernameUniqueConstraint,
+  ],
+  exports: [
+    ConfigurationService,
+    UserService,
+    UtilityService,
+    IsUsernameUniqueConstraint,
+  ],
 })
 export class SharedModule {}

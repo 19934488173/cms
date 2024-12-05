@@ -13,10 +13,19 @@ import {
 import { CreateUserDto, UpdateUserDto } from 'src/shared/dtos/user.dto';
 import { UserService } from 'src/shared/services/user.service';
 import { Result } from 'src/shared/vo/result';
+import { I18n, I18nContext } from 'nestjs-i18n';
 
 @Controller('api/users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get('hello')
+  async getHello(@I18n() i18n: I18nContext) {
+    return await i18n.t('greeting.hello', {
+      args: { name: 'UserController' },
+    });
+  }
+
   //查询所有用户
   @Get()
   async findAll() {

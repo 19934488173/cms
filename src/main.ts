@@ -5,9 +5,15 @@ import * as cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { engine } from 'express-handlebars';
+import { useContainer } from 'class-validator';
+import { ValidationPipe } from '@nestjs/common';
+import { I18nValidationPipe } from 'nestjs-i18n';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
   // 配置静态资源目录
   app.useStaticAssets(join(__dirname, '..', 'public'));
   // 设置视图文件的基本目录
@@ -40,6 +46,23 @@ async function bootstrap() {
       },
     }),
   );
+  app.useGlobalPipes(new I18nValidationPipe({ transform: true }));
+  // app.useGlobalFilters(
+  //   new I18nValidationExceptionFilter({ detailedErrors: false }),
+  // );
+  const config = new DocumentBuilder()
+    .setTitle('CMS API')
+    .setDescription('CMS API 描述')
+    .setVersion('1.0')
+    .addTag('CMS')
+    .addCookieAuth('connect.sid')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+    })
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-doc', app, document);
   await app.listen(3000);
 }
 bootstrap();
