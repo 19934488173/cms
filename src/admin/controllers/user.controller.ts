@@ -12,12 +12,14 @@ import {
   Delete,
   Headers,
   UseFilters,
+  Query,
 } from '@nestjs/common';
 import { UserService } from 'src/shared/services/user.service';
 import { UtilityService } from 'src/shared/services/utility.service';
 import { Response } from 'express';
 import { CreateUserDto, UpdateUserDto } from 'src/shared/dtos/user.dto';
 import { AdminExceptionFilter } from '../filters/admin-exception.filter';
+import { ParseOptionalIntPipe } from 'src/shared/pipes/parse-optional-int.pipe';
 @UseFilters(AdminExceptionFilter)
 @Controller('admin/users')
 export class UserController {
@@ -27,9 +29,18 @@ export class UserController {
   ) {}
   @Get()
   @Render('user/user-list')
-  async findAll() {
-    const users = await this.userService.findAll();
-    return { users };
+  async findAll(
+    @Query('keyword') keyword: string = '',
+    @Query('page', new ParseOptionalIntPipe(1)) page: number,
+    @Query('limit', new ParseOptionalIntPipe(10)) limit: number,
+  ) {
+    const { users, total } = await this.userService.findAllWithPagination(
+      page,
+      limit,
+      keyword,
+    );
+    const pageCount = Math.ceil(total / limit);
+    return { users, keyword, total, page, limit, pageCount };
   }
 
   @Get('create')

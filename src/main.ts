@@ -9,6 +9,7 @@ import { useContainer } from 'class-validator';
 import { ValidationPipe } from '@nestjs/common';
 import { I18nValidationPipe } from 'nestjs-i18n';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as helpers from 'src/shared/helpers';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -26,6 +27,7 @@ async function bootstrap() {
     engine({
       // 设置文件扩展名为 .hbs
       extname: '.hbs',
+      helpers,
       // 配置运行时选项
       runtimeOptions: {
         // 允许默认情况下访问原型属性

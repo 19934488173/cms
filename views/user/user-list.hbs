@@ -1,6 +1,14 @@
 <h1>用户列表</h1>
-<a href="/admin/users/create" class="btn btn-primary mb-4">添加用户</a>
-<table class='table table-bordered table-striped'>
+<a href="/admin/users/create" class="btn btn-primary mb-3">添加用户</a>
+
+<form action="/admin/users" method="get">
+  <div class="input-group">
+    <input type="text" class="form-control" placeholder="搜索用户名或邮箱" name="keyword" value="{{keyword}}" id="searchInput">
+    <i class="bi bi-x-square" id="clearSearch"></i>
+    <button class="btn btn-primary" type="submit">搜索</button>
+</form>
+
+<table class='table table-bordered table-striped mt-3'>
   <thead>
     <tr>
       <th>用户名</th>
@@ -42,6 +50,33 @@
   </tbody>
 </table>
 
+{{> pagination page=page pageCount=pageCount keyword=keyword}}
+
+
+<style>
+  form .input-group {
+    position: relative;
+  }
+
+  form .input-group #clearSearch {
+    position: absolute;
+    right: 80px;
+    top: 8px;
+    cursor: pointer;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  form .input-group #clearSearch:hover {
+    opacity: 1;
+  }
+
+  form .input-group #searchInput:hover+#clearSearch {
+    opacity: 1;
+  }
+</style>
+
 <script>
   $(function () {
     // 事件绑定
@@ -57,6 +92,9 @@
 
       // 切换状态
       $(document).on('click', '.status-toggle', handleStatusToggle);
+
+      // 清空搜索框
+      $(document).on('click', '#clearSearch', handleClearSearch);
     }
 
     // 排序编辑模式
@@ -112,6 +150,14 @@
         .catch((err) => alert(err.message));
     };
 
+    // 清空搜索框
+    function handleClearSearch() {
+      $('#searchInput').val('');
+      const origin = window.location.origin;
+      const pathname = window.location.pathname;
+      const newUrl = `${origin}${pathname}`;
+      window.location.href = newUrl
+    }
     // API 调用函数
     function updateSort(userId, newSort) {
       return $.ajax({

@@ -30,10 +30,12 @@ export class IsUsernameUniqueConstraint
   constructor(
     @InjectRepository(User) private readonly repository: Repository<User>,
   ) {}
+
   async validate(value: any) {
     const user = await this.repository.findOne({ where: { username: value } });
     return !user;
   }
+
   defaultMessage?(validationArguments?: ValidationArguments): string {
     const { property, value } = validationArguments;
     return `${property} ${value} 已经被使用！`;
