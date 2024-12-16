@@ -12,7 +12,7 @@
       <a class="page-link" href="?page={{inc page}}&keyword={{keyword}}&limit={{limit}}">下一页</a>
     </li>
     <li class="page-item">
-      <form method="GET" action="/admin/users" class="d-inline-block ms-3">
+      <form method="GET" action="{{callbackUrl}}" class="d-inline-block ms-3">
         <input type="hidden" name="keyword" value="{{keyword}}">
         <input type="hidden" name="page" value="{{page}}">
         <div class="input-group">

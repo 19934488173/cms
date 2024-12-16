@@ -1,7 +1,7 @@
-<h1>用户列表</h1>
-<a href="/admin/users/create" class="btn btn-primary mb-3">添加用户</a>
+<h1>资源列表</h1>
+<a href="/admin/accesses/create" class="btn btn-primary mb-3">添加资源</a>
 
-<form action="/admin/users" method="get">
+<form action="/admin/accesses" method="get">
   <div class="input-group">
     <input type="text" class="form-control" placeholder="搜索用户名或邮箱" name="keyword" value="{{keyword}}" id="searchInput">
     <i class="bi bi-x-square" id="clearSearch"></i>
@@ -11,8 +11,7 @@
 <table class='table table-bordered table-striped mt-3'>
   <thead>
     <tr>
-      <th>用户名</th>
-      <th>邮箱</th>
+      <th>名称</th>
       <th>状态<i class="bi bi-vector-pen"></i></th>
       <th>排序<i class="bi bi-sort-numeric-down"></i></th>
       <th>操作</th>
@@ -20,10 +19,9 @@
     </tr>
   </thead>
   <tbody>
-    {{#each users}}
+    {{#each accesses}}
     <tr>
-      <td>{{this.username}}</td>
-      <td>{{this.email}}</td>
+      <td>{{this.name}}</td>
       <td>
         <span class="status-toggle" style="cursor: pointer;" data-id="{{this.id}}" data-status="{{this.status}}">
           {{#if this.status}}
@@ -41,8 +39,8 @@
           value="{{this.sort}}">
       </td>
       <td>
-        <a href="/admin/users/{{this.id}}/edit" class="btn btn-sm btn-primary">编辑</a>
-        <a href="/admin/users/{{this.id}}" class="btn btn-sm btn-primary">查看</a>
+        <a href="/admin/accesses/{{this.id}}/edit" class="btn btn-sm btn-primary">编辑</a>
+        <a href="/admin/accesses/{{this.id}}" class="btn btn-sm btn-primary">查看</a>
         <button class="btn btn-sm btn-danger" onclick="deleteUser({{this.id}})">删除</button>
       </td>
     </tr>
@@ -50,7 +48,7 @@
   </tbody>
 </table>
 
-{{> pagination page=page pageCount=pageCount keyword=keyword callbackUrl='/admin/users' }}
+{{> pagination page=page pageCount=pageCount keyword=keyword callbackUrl='/admin/accesses' }}
 
 
 <style>
@@ -161,7 +159,7 @@
     // API 调用函数
     function updateSort(userId, newSort) {
       return $.ajax({
-        url: `/admin/users/${userId}`,
+        url: `/admin/accesses/${userId}`,
         type: 'PUT',
         contentType: 'application/json',
         headers: { accept: 'application/json' },
@@ -171,7 +169,7 @@
 
     function toggleUserStatus(userId, newStatus) {
       return $.ajax({
-        url: `/admin/users/${userId}`,
+        url: `/admin/accesses/${userId}`,
         type: 'PUT',
         contentType: 'application/json',
         headers: { accept: 'application/json' },
@@ -181,7 +179,7 @@
 
     function deleteUserById(userId) {
       return $.ajax({
-        url: `/admin/users/${userId}`,
+        url: `/admin/accesses/${userId}`,
         type: 'DELETE',
       }).catch((error) => handleAjaxError(error));
     }
