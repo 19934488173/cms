@@ -1,21 +1,41 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   Entity,
+  Tree,
   Column,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  TreeChildren,
+  TreeParent,
 } from 'typeorm';
+import { AccessType } from '../dtos/access.dto';
 
 @Entity()
+@Tree('materialized-path')
 export class Access {
   @PrimaryGeneratedColumn()
   @ApiProperty({ description: 'ID', example: 1 })
   id: number;
 
-  @Column({ length: 50, unique: true })
+  @Column({ length: 50 })
   @ApiProperty({ description: '名称', example: 'name' })
   name: string;
+
+  @Column({ type: 'enum', enum: AccessType })
+  type: AccessType;
+
+  @Column({ length: 200, nullable: true })
+  url: string;
+
+  @Column({ length: 200, nullable: true })
+  description: string;
+
+  @TreeChildren()
+  children: Access[];
+
+  @TreeParent()
+  parent: Access;
 
   @Column({ default: 1 })
   @ApiProperty({ description: '生效状态', example: 1 })

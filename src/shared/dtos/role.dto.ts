@@ -2,7 +2,7 @@ import {
   ApiProperty,
   PartialType as PartialTypeFromSwagger,
 } from '@nestjs/swagger';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import {
   IdValidators,
@@ -29,13 +29,4 @@ export class UpdateRoleDto extends PartialTypeFromSwagger(
 ) {
   @IdValidators()
   id: number;
-
-  @IsString()
-  @IsOptional()
-  @ApiProperty({ description: '用户名', example: 'nick' })
-  username: string;
-
-  @ApiProperty({ description: '密码', example: '666666' })
-  @IsOptional()
-  password: string;
 }

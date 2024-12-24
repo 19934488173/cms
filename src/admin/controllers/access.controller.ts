@@ -13,13 +13,12 @@ import {
   Delete,
   Headers,
   Res,
-  Query,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateAccessDto, UpdateAccessDto } from 'src/shared/dtos/access.dto';
 import { AccessService } from 'src/shared/services/access.service';
 import { AdminExceptionFilter } from '../filters/admin-exception.filter';
 import { Response } from 'express';
-import { ParseOptionalIntPipe } from 'src/shared/pipes/parse-optional-int.pipe';
 
 @UseFilters(AdminExceptionFilter)
 @Controller('admin/accesses')
@@ -28,24 +27,16 @@ export class AccessController {
 
   @Get()
   @Render('access/access-list')
-  async findAll(
-    @Query('keyword') keyword: string = '',
-    @Query('page', new ParseOptionalIntPipe(1)) page: number,
-    @Query('limit', new ParseOptionalIntPipe(10)) limit: number,
-  ) {
-    const { accesses, total } = await this.accessService.findAllWithPagination(
-      page,
-      limit,
-      keyword,
-    );
-    const pageCount = Math.ceil(total / limit);
-    return { accesses, keyword, page, limit, pageCount };
+  async findAll() {
+    const accessTree = await this.accessService.findAll();
+    return { accessTree };
   }
 
   @Get('create')
   @Render('access/access-form')
-  createForm() {
-    return { access: {} };
+  async createForm() {
+    const accessTree = await this.accessService.findAll();
+    return { access: {}, accessTree };
   }
 
   @Post()
@@ -58,9 +49,13 @@ export class AccessController {
   @Get(':id/edit')
   @Render('access/access-form')
   async editForm(@Param('id', ParseIntPipe) id: number) {
-    const access = await this.accessService.findOne({ where: { id } });
-    if (!access) throw new HttpException('Access not Found', 404);
-    return { access };
+    const access = await this.accessService.findOne({
+      where: { id },
+      relations: ['children', 'parent'],
+    });
+    if (!access) throw new NotFoundException('Access not found');
+    const accessTree = await this.accessService.findAll();
+    return { access, accessTree };
   }
 
   @Put(':id')

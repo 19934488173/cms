@@ -12,43 +12,20 @@
   <thead>
     <tr>
       <th>名称</th>
+      <th>url</th>
+      <th>类型</th>
       <th>状态<i class="bi bi-vector-pen"></i></th>
       <th>排序<i class="bi bi-sort-numeric-down"></i></th>
       <th>操作</th>
     </tr>
     </tr>
   </thead>
-  <tbody>
-    {{#each accesses}}
-    <tr>
-      <td>{{this.name}}</td>
-      <td>
-        <span class="status-toggle" style="cursor: pointer;" data-id="{{this.id}}" data-status="{{this.status}}">
-          {{#if this.status}}
-          激活
-          <i class="bi bi-check-circle-fill text-success"></i>
-          {{else}}
-          未激活
-          <i class="bi bi-x-circle-fill text-danger"></i>
-          {{/if}}
-        </span>
-      </td>
-      <td>
-        <span style="cursor: pointer;" class="sort-text" data-id="{{this.id}}">{{this.sort}}</span>
-        <input type="number" class="form-control sort-input d-none" style="width:80px" data-id="{{this.id}}"
-          value="{{this.sort}}">
-      </td>
-      <td>
-        <a href="/admin/accesses/{{this.id}}/edit" class="btn btn-sm btn-primary">编辑</a>
-        <a href="/admin/accesses/{{this.id}}" class="btn btn-sm btn-primary">查看</a>
-        <button class="btn btn-sm btn-danger" onclick="deleteUser({{this.id}})">删除</button>
-      </td>
-    </tr>
+  <tbody id="accessTreeTable">
+    {{#each accessTree}}
+    {{> access-node this depth=1}}
     {{/each}}
   </tbody>
 </table>
-
-{{> pagination page=page pageCount=pageCount keyword=keyword callbackUrl='/admin/accesses' }}
 
 
 <style>
@@ -77,6 +54,28 @@
 
 <script>
   $(function () {
+    $('#accessTreeTable').on('click', '.toggle', function () {
+      const $toggle = $(this);
+      const id = $toggle.data('id');
+      const $tr = $toggle.closest('tr');
+      if ($tr.nextAll('tr[data-parent="' + id + '"]').is(':visible')) {
+        hideChildren($tr, id);
+        $toggle.html('<i class="bi bi-folder-plus"></i>');
+      } else {
+        $tr.nextAll('tr[data-parent="' + id + '"]').show();
+        $toggle.html('<i class="bi bi-folder-minus"></i>');
+      }
+    });
+    function hideChildren($tr, id) {
+      const $children = $tr.nextAll('tr[data-parent="' + id + '"]');
+      $children.each(function () {
+        const childId = $(this).data('id');
+        hideChildren($(this), childId);
+      });
+      $children.hide();
+    }
+
+
     // 事件绑定
     bindEventListeners();
 
@@ -140,7 +139,7 @@
     }
 
     // 删除用户逻辑
-    window.deleteUser = function (id) {
+    window.deleteAccess = function (id) {
       if (!confirm('确定删除该用户吗？')) return;
 
       deleteUserById(id)
