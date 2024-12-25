@@ -1,22 +1,19 @@
 <h1>用户列表</h1>
-<a href="/admin/users/create" class="btn btn-primary mb-3">添加用户</a>
-
-<form action="/admin/users" method="get">
+<a href="/admin/users/create" class="btn btn-success mb-3">添加用户</a>
+<form method="GET" action="/admin/users" class="mb-3">
   <div class="input-group">
-    <input type="text" class="form-control" placeholder="搜索用户名或邮箱" name="keyword" value="{{keyword}}" id="searchInput">
-    <i class="bi bi-x-square" id="clearSearch"></i>
-    <button class="btn btn-primary" type="submit">搜索</button>
+    <input type="text" name="keyword" class="form-control" placeholder="请输入搜索关键字" value="{{keyword}}">
+    <button class="btn btn-outline-secondary">搜索</button>
+  </div>
 </form>
-
-<table class='table table-bordered table-striped mt-3'>
+<table class="table">
   <thead>
     <tr>
-      <th>用户名</th>
-      <th>邮箱</th>
-      <th>状态<i class="bi bi-vector-pen"></i></th>
-      <th>排序<i class="bi bi-sort-numeric-down"></i></th>
-      <th>操作</th>
-    </tr>
+      <td>用户名</td>
+      <td>邮箱</td>
+      <td>状态</td>
+      <td>排序</td>
+      <td>操作</td>
     </tr>
   </thead>
   <tbody>
@@ -25,171 +22,160 @@
       <td>{{this.username}}</td>
       <td>{{this.email}}</td>
       <td>
-        <span class="status-toggle" style="cursor: pointer;" data-id="{{this.id}}" data-status="{{this.status}}">
+        <span class="status-toggle" data-id="{{this.id}}" data-status="{{this.status}}">
           {{#if this.status}}
-          激活
           <i class="bi bi-check-circle-fill text-success"></i>
           {{else}}
-          未激活
           <i class="bi bi-x-circle-fill text-danger"></i>
           {{/if}}
         </span>
       </td>
       <td>
-        <span style="cursor: pointer;" class="sort-text" data-id="{{this.id}}">{{this.sort}}</span>
-        <input type="number" class="form-control sort-input d-none" style="width:80px" data-id="{{this.id}}"
+        <span class="sort-text" data-id="{{this.id}}">{{this.sort}}</span>
+        <input type="number" class="form-control sort-input d-none" style="width:50%" data-id="{{this.id}}"
           value="{{this.sort}}">
       </td>
       <td>
-        <a href="/admin/users/{{this.id}}/edit" class="btn btn-sm btn-primary">编辑</a>
-        <a href="/admin/users/{{this.id}}" class="btn btn-sm btn-primary">查看</a>
-        <button class="btn btn-sm btn-danger" onclick="deleteUser({{this.id}})">删除</button>
+        <a href="/admin/users/{{this.id}}" class="btn btn-primary btn-sm">查看</a>
+        <a href="/admin/users/{{this.id}}/edit" class="btn btn-warning btn-sm">修改</a>
+        <a class="btn btn-danger btn-sm" onclick="deleteUser({{this.id}})">删除</a>
+        <button class="btn btn-info btn-sm" onclick="assignRoles({{this.id}})">分配角色</button>
       </td>
     </tr>
     {{/each}}
   </tbody>
 </table>
 
-{{> pagination page=page pageCount=pageCount keyword=keyword callbackUrl='/admin/users' }}
+{{> pagination this callbackUrl='/admin/users' }}
 
-
-<style>
-  form .input-group {
-    position: relative;
-  }
-
-  form .input-group #clearSearch {
-    position: absolute;
-    right: 80px;
-    top: 8px;
-    cursor: pointer;
-    z-index: 1;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  form .input-group #clearSearch:hover {
-    opacity: 1;
-  }
-
-  form .input-group #searchInput:hover+#clearSearch {
-    opacity: 1;
-  }
-</style>
-
+<div class="modal fade" id="roleModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="roleModalLabel">分配角色</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="roleForm">
+          {{#each roles}}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="{{this.id}}" id="role{{this.id}}">
+            <label class="form-check-label" for="role{{this.id}}">
+              {{this.name}}
+            </label>
+          </div>
+          {{/each}}
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+        <button type="button" class="btn btn-primary" id="saveRoles">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
-  $(function () {
-    // 事件绑定
-    bindEventListeners();
-
-    // 事件委托绑定函数
-    function bindEventListeners() {
-      // 排序 - 双击进入编辑模式
-      $(document).on('dblclick', '.sort-text', handleSortEdit);
-
-      // 排序 - 离开编辑模式
-      $(document).on('blur', '.sort-input', handleSortUpdate);
-
-      // 切换状态
-      $(document).on('click', '.status-toggle', handleStatusToggle);
-
-      // 清空搜索框
-      $(document).on('click', '#clearSearch', handleClearSearch);
-    }
-
-    // 排序编辑模式
-    function handleSortEdit() {
-      const $this = $(this);
-      const userId = $this.data('id');
-      $this.addClass('d-none');
-      $(`.sort-input[data-id="${userId}"]`).removeClass('d-none').focus();
-    }
-
-    // 排序更新逻辑
-    function handleSortUpdate() {
-      const $this = $(this);
-      const userId = $this.data('id');
-      const newSort = $this.val().trim();
-
-      if (!newSort || isNaN(newSort)) {
-        alert('请输入有效的数字');
-        return;
+  let selectedUserId;
+  function assignRoles(userId) {
+    selectedUserId = userId;
+    $.ajax({
+      url: `/admin/users/${userId}`,
+      type: 'GET',
+      headers: {
+        'accept': 'application/json'
+      },
+      success: function (user) {
+        const roles = user.roles.map(role => role.id);
+        $('#roleForm input[type="checkbox"]').each(function () {
+          $(this).prop('checked', roles.includes(parseInt($(this).val())));
+        });
+        $('#roleModal').modal('show');
       }
+    });
 
-      updateSort(userId, newSort)
-        .then(() => {
-          $this.addClass('d-none');
-          $(`.sort-text[data-id="${userId}"]`).removeClass('d-none').text(newSort);
-        })
-        .catch((err) => alert(err.message));
-    }
-
-    // 切换状态逻辑
-    function handleStatusToggle() {
-      const $this = $(this);
-      const userId = $this.data('id');
-      const currentStatus = $this.data('status');
-      const newStatus = currentStatus === 1 ? 0 : 1;
-
-      toggleUserStatus(userId, newStatus)
-        .then(() => {
-          $this.data('status', newStatus);
-          $this.html(
-            `${newStatus ? '激活' : '未激活'}<i class="bi ${newStatus ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} ${newStatus ? 'text-success' : 'text-danger'}"></i>`
-          );
-        })
-        .catch((err) => alert(err.message));
-    }
-
-    // 删除用户逻辑
-    window.deleteUser = function (id) {
-      if (!confirm('确定删除该用户吗？')) return;
-
-      deleteUserById(id)
-        .then(() => location.reload())
-        .catch((err) => alert(err.message));
-    };
-
-    // 清空搜索框
-    function handleClearSearch() {
-      $('#searchInput').val('');
-      const origin = window.location.origin;
-      const pathname = window.location.pathname;
-      const newUrl = `${origin}${pathname}`;
-      window.location.href = newUrl
-    }
-    // API 调用函数
-    function updateSort(userId, newSort) {
-      return $.ajax({
-        url: `/admin/users/${userId}`,
-        type: 'PUT',
-        contentType: 'application/json',
-        headers: { accept: 'application/json' },
-        data: JSON.stringify({ sort: newSort }),
-      }).catch((error) => handleAjaxError(error));
-    }
-
-    function toggleUserStatus(userId, newStatus) {
-      return $.ajax({
-        url: `/admin/users/${userId}`,
-        type: 'PUT',
-        contentType: 'application/json',
-        headers: { accept: 'application/json' },
-        data: JSON.stringify({ status: newStatus }),
-      }).catch((error) => handleAjaxError(error));
-    }
-
-    function deleteUserById(userId) {
-      return $.ajax({
-        url: `/admin/users/${userId}`,
+  }
+  $('#saveRoles').on('click', function () {
+    const roleIds = $('#roleForm input[type="checkbox"]:checked').map(function () {
+      return $(this).val();
+    }).get();
+    $.ajax({
+      url: `/admin/users/${selectedUserId}/roles`,
+      type: 'PUT',
+      headers: {
+        'accept': 'application/json'
+      },
+      contentType: 'application/json',
+      data: JSON.stringify({ roleIds }),
+      success: function (response) {
+        $('#roleModal').modal('hide');
+        location.reload();
+      },
+      error: function (error) {
+        const { responseJSON } = error;
+        alert(responseJSON.message);
+      }
+    });
+  });
+  function deleteUser(id) {
+    if (confirm('确定要删除吗?')) {
+      $.ajax({
+        url: `/admin/users/${id}`,
         type: 'DELETE',
-      }).catch((error) => handleAjaxError(error));
+        success: function (data) {
+          if (data.success) {
+            const params = new URLSearchParams(window.location.search);
+            params.delete('page');
+            params.append('page', 1)
+            const query = params.toString();
+            window.location = window.location.pathname  +'?' + query;
+          }
+        }
+      })
     }
-
-    // 通用错误处理
-    function handleAjaxError(error) {
-      const responseJSON = error.responseJSON || {};
-      throw new Error(responseJSON.message || '请求失败，请稍后重试');
-    }
+  }
+  $(function () {
+    $('.sort-text').on('dblclick', function () {
+      const $this = $(this);
+      const id = $this.data('id');
+      $this.addClass('d-none');
+      $(`.sort-input[data-id="${id}"]`).removeClass('d-none').focus();
+    });
+    $('.sort-input').on('blur', function () {
+      const $this = $(this);
+      const id = $this.data('id');
+      const newSort = $this.val();
+      $this.addClass('d-none');
+      $.ajax({
+        url: `/admin/users/${id}`,
+        type: 'PUT',
+        headers: { 'accept': 'application/json' },
+        contentType: 'application/json',
+        data: JSON.stringify({ sort: newSort }),
+        success: function (data) {
+          if (data.success) {
+            $(`.sort-text[data-id="${id}"]`).removeClass('d-none').text(newSort);
+          }
+        }
+      })
+    });
+    $('.status-toggle').on('click', function () {
+      const $this = $(this);
+      const id = $this.data('id');
+      const currentStatus = $this.data('status');
+      const newStatus = currentStatus == 1 ? 0 : 1;
+      $.ajax({
+        url: `/admin/users/${id}`,
+        type: 'PUT',
+        headers: { 'accept': 'application/json' },
+        contentType: 'application/json',
+        data: JSON.stringify({ status: newStatus }),
+        success: function (data) {
+          if (data.success) {
+            $this.data('status', newStatus);
+            $this.html(` <i class="bi ${newStatus ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} ${newStatus ? 'text-success' : 'text-danger'}"></i>`);
+          }
+        }
+      })
+    });
   });
 </script>

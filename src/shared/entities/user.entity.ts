@@ -6,7 +6,10 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
+import { Role } from './role.entity';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -37,6 +40,10 @@ export class User {
   @Column({ length: 100, nullable: true })
   @ApiProperty({ description: '邮件', example: 'nick@qq.com' })
   email: string;
+
+  @ManyToMany(() => Role)
+  @JoinTable()
+  roles: Role[];
 
   @Column({ default: 1 })
   @ApiProperty({ description: '生效状态', example: 1 })

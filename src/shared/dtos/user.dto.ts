@@ -1,5 +1,9 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+  PartialType as PartialTypeFromSwagger,
+} from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsString,
@@ -15,54 +19,54 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { PartialType, OmitType } from '@nestjs/mapped-types';
 import {
   IdValidators,
-  SortValidators,
   StatusValidators,
+  SortValidators,
 } from '../decorators/dto.decorator';
-import {
-  IsUsernameUniqueConstraint,
-  StartsWithConstraint,
-} from '../validators/user-validators';
+import { IsUsernameUniqueConstraint } from '../validators/user-validators';
 export class CreateUserDto {
-  @Validate(StartsWithConstraint, ['user_'])
-  @Validate(IsUsernameUniqueConstraint)
+  @IsString()
   @ApiProperty({ description: '用户名', example: 'nick' })
+  @Validate(IsUsernameUniqueConstraint, [], {
+    message: i18nValidationMessage('validation.usernameIsNotUnique'),
+  })
   username: string;
 
   @PasswordValidators()
   @ApiProperty({ description: '密码', example: '666666' })
   password: string;
+
   @MobileValidators()
   @ApiProperty({ description: '手机号', example: '15788888888' })
   @ApiPropertyOptional()
   mobile: string;
+
   @EmailValidators()
   @ApiProperty({ description: '邮件', example: 'nick@qq.com' })
   email: string;
+
   @StatusValidators()
   @ApiProperty({ description: '状态', example: 1 })
   status: number;
+
   @IsSuperValidators()
   @ApiProperty({ description: '是否超级管理员', example: true })
   is_super: boolean;
+
   @SortValidators()
   @ApiProperty({ description: '排序号', example: 100 })
   sort: number;
 }
-export class UpdateUserDto extends OmitType(PartialType(CreateUserDto), [
-  'username',
-  'password',
-]) {
+export class UpdateUserDto extends PartialTypeFromSwagger(
+  OmitType(PartialType(CreateUserDto), ['username', 'password']),
+) {
   @IdValidators()
   id: number;
-
   @IsString()
   @IsOptional()
   @ApiProperty({ description: '用户名', example: 'nick' })
   username: string;
-
-  @IsString()
-  @IsOptional()
   @ApiProperty({ description: '密码', example: '666666' })
+  @IsOptional()
   password: string;
 }
 function PasswordValidators() {
@@ -88,7 +92,14 @@ function PasswordValidators() {
   );
 }
 function EmailValidators() {
-  return applyDecorators(IsEmail(), IsOptional());
+  return applyDecorators(
+    IsEmail(),
+    IsNotEmpty({
+      message: i18nValidationMessage('validation.isNotEmpty', {
+        field: 'email',
+      }),
+    }),
+  );
 }
 function MobileValidators() {
   return applyDecorators(IsString(), IsOptional());
@@ -99,4 +110,7 @@ function IsSuperValidators() {
     IsOptional(),
     Type(() => Boolean),
   );
+}
+export class UpdateUserRolesDto {
+  readonly roleIds: number[];
 }
